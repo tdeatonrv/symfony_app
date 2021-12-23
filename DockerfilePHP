@@ -1,0 +1,53 @@
+FROM php:7.4-fpm
+ARG PHP_EXTRA_CONFIGURE_ARGS="--enable-mailparse"
+ARG WITH_XDEBUG=false
+RUN apt-get update && apt-get install -y \
+        imagemagick \
+        libmagickwand-dev \
+        ghostscript \
+        libxml2-dev \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libmcrypt-dev \
+        libpng-dev \
+        librabbitmq-dev \
+        libssl-dev \
+        libssh2-1-dev \
+        pkg-config \
+        libzip-dev \
+        zlib1g-dev \
+        libicu-dev \
+        g++ \
+    && pecl install mailparse \
+    && docker-php-ext-enable mailparse \
+    && docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) gd \
+    && docker-php-ext-install pdo_mysql \
+    && docker-php-ext-install bcmath \
+    && docker-php-ext-install calendar \
+    && docker-php-ext-install exif \
+    && docker-php-ext-install gettext \
+    && docker-php-ext-install intl \
+    && docker-php-ext-install opcache \
+	&& docker-php-ext-install soap \
+	&& docker-php-ext-install zip \
+	&& docker-php-ext-install mysqli \
+	&& docker-php-ext-install pcntl \
+	&& pecl install ssh2-1.2 \
+    && docker-php-ext-enable ssh2 \
+    && pecl install imagick \
+    && docker-php-ext-enable imagick \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install intl;
+
+RUN if [ $WITH_XDEBUG = "true" ] ; then \
+  pecl install xdebug-3.0.4; \
+  docker-php-ext-enable xdebug; \
+  echo "xdebug.remote_enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+  echo "xdebug.remote_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+  echo "xdebug.remote_port=9001" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+  echo "xdebug.idekey=PHPSTORM" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+  echo "xdebug.var_display_max_children=-1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+  echo "xdebug.var_display_max_data=-1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+  echo "xdebug.var_display_max_depth=-1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+  fi ;
